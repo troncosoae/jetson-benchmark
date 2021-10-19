@@ -181,67 +181,85 @@ def run_forward_test(
             device=device, echo=False)
 
         tracked_values.to_csv(
-            f"performance_data/{framework}/{saved_net_path}/" +
-            "tracked_values.csv")
+            f"performance_data/{framework}/{device}_{priority}_" +
+            f"{saved_net_path}/tracked_values.csv")
         batch_exec_times.to_csv(
-            f"performance_data/{framework}/{saved_net_path}/" +
-            "batch_exec_times.csv")
+            f"performance_data/{framework}/{device}_{priority}_" +
+            f"{saved_net_path}/batch_exec_times.csv")
 
 
 if __name__ == "__main__":
 
     X, Y = import_data()
 
+    print('x')
     run_forward_test(
         X, Y, 'l', 'large_v1', -15, 'cuda', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 'm', 'medium_v1', -15, 'cuda', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 's', 'small_v1', -15, 'cuda', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 'l', 'large_v1', 0, 'cuda', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 'm', 'medium_v1', 0, 'cuda', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 's', 'small_v1', 0, 'cuda', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 'l', 'large_v1', 15, 'cuda', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 'm', 'medium_v1', 15, 'cuda', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 's', 'small_v1', 15, 'cuda', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 'l', 'large_v1', -15, 'cpu', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 'm', 'medium_v1', -15, 'cpu', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 's', 'small_v1', -15, 'cpu', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 'l', 'large_v1', 0, 'cpu', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 'm', 'medium_v1', 0, 'cpu', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 's', 'small_v1', 0, 'cpu', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 'l', 'large_v1', 15, 'cpu', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 'm', 'medium_v1', 15, 'cpu', 'torch')
 
+    print('x')
     run_forward_test(
         X, Y, 's', 'small_v1', 15, 'cpu', 'torch')
