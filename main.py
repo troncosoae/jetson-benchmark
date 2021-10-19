@@ -248,19 +248,19 @@ def run_forward_test(
         net_interface.load_weights(
             f'saved_nets/saved_{framework}/{saved_net_path}.pth')
 
-        X, Y = suit4torch(X_data, Y_data)
+        X, Y = suit4tf(X_data, Y_data)
 
         exec_batch_size = 10
-        tracked_values, batch_exec_times = execute_net_torch(
+        tracked_values, batch_exec_times = execute_net_tf(
             net_interface, X, Y, exec_batch_size, priority,
             device=device, echo=False)
 
         tracked_values.to_csv(
-            f"performance_data/{framework}/{saved_net_path}/" +
-            "tracked_values.csv")
+            f"performance_data/{framework}/{device}_{priority}_" +
+            f"{saved_net_path}/batch_exec_times.csv")
         batch_exec_times.to_csv(
-            f"performance_data/{framework}/{saved_net_path}/" +
-            "batch_exec_times.csv")
+            f"performance_data/{framework}/{device}_{priority}_" +
+            f"{saved_net_path}/batch_exec_times.csv")
 
 
 if __name__ == "__main__":
@@ -268,4 +268,109 @@ if __name__ == "__main__":
     X, Y = import_data()
 
     run_forward_test(
+        X, Y, 'l', 'large_v1', -15, 'cuda', 'tf')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', -15, 'cuda', 'tf')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', -15, 'cuda', 'tf')
+
+    run_forward_test(
         X, Y, 'l', 'large_v1', 0, 'cuda', 'tf')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', 0, 'cuda', 'tf')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', 0, 'cuda', 'tf')
+
+    run_forward_test(
+        X, Y, 'l', 'large_v1', 15, 'cuda', 'tf')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', 15, 'cuda', 'tf')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', 15, 'cuda', 'tf')
+
+    run_forward_test(
+        X, Y, 'l', 'large_v1', -15, 'cpu', 'tf')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', -15, 'cpu', 'tf')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', -15, 'cpu', 'tf')
+
+    run_forward_test(
+        X, Y, 'l', 'large_v1', 0, 'cpu', 'tf')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', 0, 'cpu', 'tf')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', 0, 'cpu', 'tf')
+
+    run_forward_test(
+        X, Y, 'l', 'large_v1', 15, 'cpu', 'tf')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', 15, 'cpu', 'tf')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', 15, 'cpu', 'tf')
+
+    run_forward_test(
+        X, Y, 'l', 'large_v1', -15, 'cuda', 'torch')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', -15, 'cuda', 'torch')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', -15, 'cuda', 'torch')
+
+    run_forward_test(
+        X, Y, 'l', 'large_v1', 0, 'cuda', 'torch')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', 0, 'cuda', 'torch')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', 0, 'cuda', 'torch')
+
+    run_forward_test(
+        X, Y, 'l', 'large_v1', 15, 'cuda', 'torch')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', 15, 'cuda', 'torch')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', 15, 'cuda', 'torch')
+
+    run_forward_test(
+        X, Y, 'l', 'large_v1', -15, 'cpu', 'torch')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', -15, 'cpu', 'torch')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', -15, 'cpu', 'torch')
+
+    run_forward_test(
+        X, Y, 'l', 'large_v1', 0, 'cpu', 'torch')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', 0, 'cpu', 'torch')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', 0, 'cpu', 'torch')
+
+    run_forward_test(
+        X, Y, 'l', 'large_v1', 15, 'cpu', 'torch')
+
+    run_forward_test(
+        X, Y, 'm', 'medium_v1', 15, 'cpu', 'torch')
+
+    run_forward_test(
+        X, Y, 's', 'small_v1', 15, 'cpu', 'torch')
