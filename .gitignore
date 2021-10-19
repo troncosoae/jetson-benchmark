@@ -132,3 +132,4 @@ dmypy.json
 */data/*
 datasets/*
 saved_nets/*
+performance_data/*
