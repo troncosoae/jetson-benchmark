@@ -7,6 +7,7 @@ import pandas as pd
 import torch
 import sys
 import os
+import csv
 
 from data_worker.data_worker import unpickle, unpack_data, \
     combine_batches, split_into_batches
@@ -81,11 +82,15 @@ class CpuGpuTracker(Thread):
                 ))
             time.sleep(self.Ts)
 
-    def get_values(self):
+    def get_values_df(self):
         return pd.DataFrame(
             self.values, columns=[
                 'time', 'memory', 'cpu_percent', 'gpu_percent']
             )
+
+    def get_values(self):
+        columns = ['time', 'memory', 'cpu_percent', 'gpu_percent']
+        return self.values, columns
 
 
 def execute_net_torch(
@@ -127,12 +132,10 @@ def execute_net_torch(
                 ))
                 batch_count += 1
 
-        procesor_tracked_values = tracker.get_values()
+        procesor_tracked_values, columns_ptv = tracker.get_values()
 
-    batch_exec_times = pd.DataFrame(
-        batch_exec_times, columns=['loop', 'batch_count', 'batch_time', 'time']
-    )
-    return procesor_tracked_values, batch_exec_times
+    columns_bet = ['loop', 'batch_count', 'batch_time', 'time']
+    return procesor_tracked_values, columns_ptv, batch_exec_times, columns_bet
 
 
 def import_data():
@@ -176,16 +179,25 @@ def run_forward_test(
         X, Y = suit4torch(X_data, Y_data)
 
         exec_batch_size = 10
-        tracked_values, batch_exec_times = execute_net_torch(
+        tracked_values, cols1, batch_exec_times, cols2 = execute_net_torch(
             net_interface, X, Y, exec_batch_size, priority,
             device=device, echo=False)
 
-        tracked_values.to_csv(
+        write_csv(
+            tracked_values, cols1,
             f"performance_data/{framework}/{device}_{priority}_" +
             f"{saved_net_path}/tracked_values.csv")
-        batch_exec_times.to_csv(
+        write_csv(
+            batch_exec_times, cols2,
             f"performance_data/{framework}/{device}_{priority}_" +
             f"{saved_net_path}/batch_exec_times.csv")
+
+
+def write_csv(list, columns, path):
+    with open(path, 'w+', newline='') as file:
+        write = csv.writer(file)
+        write.writerow(columns)
+        write.writerows(list)
 
 
 if __name__ == "__main__":
