@@ -8,6 +8,8 @@ import torch
 import sys
 import os
 import csv
+if sys.platform == 'linux':
+    from jtop import jtop
 
 from data_worker.data_worker import unpickle, unpack_data, \
     combine_batches, split_into_batches
@@ -17,80 +19,140 @@ from torch_lib.Nets import LargeNet as torchLNet, \
     MediumNet as torchMNet, SmallNet as torchSNet
 
 
-class GpuReader(Thread):
+# class GpuReader(Thread):
 
-    def __init__(self):
-        self.process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE)
-        self.stopped = True
-        self.values = {}
-        super().__init__()
+#     def __init__(self):
+#         self.process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE)
+#         self.stopped = True
+#         self.values = {}
+#         super().__init__()
+
+#     def __enter__(self):
+#         self.start()
+#         return self
+
+#     def __exit__(self, exception_type, exception_value, traceback):
+#         self.stop()
+
+#     def start(self):
+#         self.stopped = False
+#         super().start()
+
+#     def stop(self):
+#         self.stopped = True
+
+#     def run(self):
+#         while not self.stopped:
+#             resp = self.process.stdout.readline().strip().decode('utf-8')
+#             resp_array = resp.split(' ')
+#             idx = resp_array.index('GR3D_FREQ')
+#             self.values['GR3D_FRWQ'] = resp_array[idx + 1]
+
+
+# class CpuGpuTracker(Thread):
+
+#     def __init__(self, Ts):
+#         self.Ts = Ts
+#         self.stopped = True
+#         self.start_time = None
+#         self.values = []
+#         super().__init__()
+
+#     def __enter__(self):
+#         self.start()
+#         return self
+
+#     def __exit__(self, exception_type, exception_value, traceback):
+#         self.stop()
+
+#     def start(self):
+#         self.stopped = False
+#         self.start_time = time.time()
+#         super().start()
+
+#     def stop(self):
+#         self.stopped = True
+
+#     def run(self):
+#         while not self.stopped:
+#             mem = psutil.virtual_memory()
+#             cpu_percent = psutil.cpu_percent()
+#             gpu_percent = 20
+#             self.values.append((
+#                     time.time() - self.start_time, mem.percent, cpu_percent,
+#                     gpu_percent
+#                 ))
+#             time.sleep(self.Ts)
+
+#     def get_values_df(self):
+#         return pd.DataFrame(
+#             self.values, columns=[
+#                 'time', 'memory', 'cpu_percent', 'gpu_percent']
+#             )
+
+#     def get_values(self):
+#         columns = ['time', 'memory', 'cpu_percent', 'gpu_percent']
+#         return self.values, columns
+
+
+class DummyJtop(Thread):
+    def __init__(self, interval=0.5):
+        self.Ts = interval
+        self.cpu = {
+            'CPU1': {'val': 1},
+            'CPU2': {'val': 1},
+            'CPU3': {'val': 1},
+            'CPU4': {'val': 1}
+        }
+        self.gpu = {'val': 1}
+        self.ram = {'use': 1, 'tot': 1}
 
     def __enter__(self):
-        self.start()
-        return self
+        pass
 
     def __exit__(self, exception_type, exception_value, traceback):
-        self.stop()
-
-    def start(self):
-        self.stopped = False
-        super().start()
-
-    def stop(self):
-        self.stopped = True
-
-    def run(self):
-        while not self.stopped:
-            resp = self.process.stdout.readline().strip().decode('utf-8')
-            resp_array = resp.split(' ')
-            idx = resp_array.index('GR3D_FREQ')
-            self.values['GR3D_FRWQ'] = resp_array[idx + 1]
+        pass
 
 
-class CpuGpuTracker(Thread):
-
-    def __init__(self, Ts):
-        self.Ts = Ts
-        self.stopped = True
+class JtopAdapter(Thread):
+    def __init__(self, interval):
+        self.interval = interval
         self.start_time = None
+        self.jtop_inst = DummyJtop(interval=interval)
+        if sys.platform == 'linux':
+            self.jtop_inst = jtop(interval=interval)
         self.values = []
+        self.stopped = True
         super().__init__()
 
     def __enter__(self):
-        self.start()
-        return self
-
-    def __exit__(self, exception_type, exception_value, traceback):
-        self.stop()
-
-    def start(self):
         self.stopped = False
         self.start_time = time.time()
-        super().start()
+        self.jtop_inst.__enter__()
+        return self
 
-    def stop(self):
+    def __exit__(self, exception_type, exception_value, traceback):
         self.stopped = True
+        self.jtop_inst.__exit__(exception_type, exception_value, traceback)
+
+    def read_stats(self):
+        self.values.append(
+            self.jtop_inst.cpu['CPU1']['val'],
+            self.jtop_inst.cpu['CPU2']['val'],
+            self.jtop_inst.cpu['CPU3']['val'],
+            self.jtop_inst.cpu['CPU4']['val'],
+            self.jtop_inst.gpu['val'],
+            self.jtop_inst.ram['use']/self.jtop_inst.ram['tot'],
+            time.time() - self.start_time
+        )
 
     def run(self):
         while not self.stopped:
-            mem = psutil.virtual_memory()
-            cpu_percent = psutil.cpu_percent()
-            gpu_percent = 20
-            self.values.append((
-                    time.time() - self.start_time, mem.percent, cpu_percent,
-                    gpu_percent
-                ))
-            time.sleep(self.Ts)
+            self.read_stats()
+            time.sleep(self.interval)
 
-    def get_values_df(self):
-        return pd.DataFrame(
-            self.values, columns=[
-                'time', 'memory', 'cpu_percent', 'gpu_percent']
-            )
-
-    def get_values(self):
-        columns = ['time', 'memory', 'cpu_percent', 'gpu_percent']
-        return self.values, columns
+    def export_stats(self):
+        return self.values, ['CPU1', 'CPU2', 'CPU3', 'CPU4', 'GPU', 'RAM']
 
 
 def execute_net_torch(
@@ -111,9 +173,9 @@ def execute_net_torch(
     batches = split_into_batches(X_data, Y_data, batch_size)
 
     batch_exec_times = []
+    columns_bet = ['loop', 'batch', 'batch_time', 'time']
 
-    procesor_tracked_values = None
-    with CpuGpuTracker(0.1) as tracker:
+    with JtopAdapter(0.1) as tracker:
 
         initial_time = time.time()
 
@@ -132,9 +194,8 @@ def execute_net_torch(
                 ))
                 batch_count += 1
 
-        procesor_tracked_values, columns_ptv = tracker.get_values()
+        procesor_tracked_values, columns_ptv = tracker.export_stats()
 
-    columns_bet = ['loop', 'batch_count', 'batch_time', 'time']
     return procesor_tracked_values, columns_ptv, batch_exec_times, columns_bet
 
 
