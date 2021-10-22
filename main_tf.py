@@ -1,15 +1,8 @@
-import numpy as np
 from threading import Thread
 import time
-import psutil
-import subprocess
-import pandas as pd
-import torch
 import sys
 import os
 import csv
-
-from torch._C import float32
 if sys.platform == 'linux':
     from jtop import jtop
 
