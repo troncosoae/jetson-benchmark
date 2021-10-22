@@ -5,6 +5,7 @@ import os
 import csv
 if sys.platform == 'linux':
     from jtop import jtop
+    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
 from data_worker.data_worker import unpickle, unpack_data, \
     combine_batches, split_into_batches
@@ -142,6 +143,8 @@ def run_forward_test(
         raise Exception("'device' parameter must be one of 'cuda' or 'cpu'")
     if device == 'cpu':
         os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    else:
+        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     if framework not in ['torch', 'tf']:
         raise Exception("'framework' parameter must be one of 'torch' or 'tf'")
