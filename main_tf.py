@@ -8,6 +8,8 @@ import torch
 import sys
 import os
 import csv
+
+from torch._C import float32
 if sys.platform == 'linux':
     from jtop import jtop
 
@@ -142,6 +144,11 @@ def import_data():
 
 def run_forward_test(
         X_data, Y_data, net_size, saved_net_path, priority, device, framework):
+
+    if device not in ['cuda', 'cpu']:
+        raise Exception("'device' parameter must be one of 'cuda' or 'cpu'")
+    if device == 'cpu':
+        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
     if framework not in ['torch', 'tf']:
         raise Exception("'framework' parameter must be one of 'torch' or 'tf'")
