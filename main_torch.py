@@ -19,82 +19,6 @@ from torch_lib.Nets import LargeNet as torchLNet, \
     MediumNet as torchMNet, SmallNet as torchSNet
 
 
-# class GpuReader(Thread):
-
-#     def __init__(self):
-#         self.process = subprocess.Popen(['tegrastats'], stdout=subprocess.PIPE)
-#         self.stopped = True
-#         self.values = {}
-#         super().__init__()
-
-#     def __enter__(self):
-#         self.start()
-#         return self
-
-#     def __exit__(self, exception_type, exception_value, traceback):
-#         self.stop()
-
-#     def start(self):
-#         self.stopped = False
-#         super().start()
-
-#     def stop(self):
-#         self.stopped = True
-
-#     def run(self):
-#         while not self.stopped:
-#             resp = self.process.stdout.readline().strip().decode('utf-8')
-#             resp_array = resp.split(' ')
-#             idx = resp_array.index('GR3D_FREQ')
-#             self.values['GR3D_FRWQ'] = resp_array[idx + 1]
-
-
-# class CpuGpuTracker(Thread):
-
-#     def __init__(self, Ts):
-#         self.Ts = Ts
-#         self.stopped = True
-#         self.start_time = None
-#         self.values = []
-#         super().__init__()
-
-#     def __enter__(self):
-#         self.start()
-#         return self
-
-#     def __exit__(self, exception_type, exception_value, traceback):
-#         self.stop()
-
-#     def start(self):
-#         self.stopped = False
-#         self.start_time = time.time()
-#         super().start()
-
-#     def stop(self):
-#         self.stopped = True
-
-#     def run(self):
-#         while not self.stopped:
-#             mem = psutil.virtual_memory()
-#             cpu_percent = psutil.cpu_percent()
-#             gpu_percent = 20
-#             self.values.append((
-#                     time.time() - self.start_time, mem.percent, cpu_percent,
-#                     gpu_percent
-#                 ))
-#             time.sleep(self.Ts)
-
-#     def get_values_df(self):
-#         return pd.DataFrame(
-#             self.values, columns=[
-#                 'time', 'memory', 'cpu_percent', 'gpu_percent']
-#             )
-
-#     def get_values(self):
-#         columns = ['time', 'memory', 'cpu_percent', 'gpu_percent']
-#         return self.values, columns
-
-
 class DummyJtop(Thread):
     def __init__(self, interval=0.5):
         self.Ts = interval
@@ -128,6 +52,7 @@ class JtopAdapter(Thread):
     def __enter__(self):
         self.stopped = False
         self.start_time = time.time()
+        self.start()
         self.jtop_inst.__enter__()
         return self
 
@@ -136,7 +61,7 @@ class JtopAdapter(Thread):
         self.jtop_inst.__exit__(exception_type, exception_value, traceback)
 
     def read_stats(self):
-        self.values.append(
+        self.values.append((
             self.jtop_inst.cpu['CPU1']['val'],
             self.jtop_inst.cpu['CPU2']['val'],
             self.jtop_inst.cpu['CPU3']['val'],
@@ -144,7 +69,7 @@ class JtopAdapter(Thread):
             self.jtop_inst.gpu['val'],
             self.jtop_inst.ram['use']/self.jtop_inst.ram['tot'],
             time.time() - self.start_time
-        )
+        ))
 
     def run(self):
         while not self.stopped:
@@ -265,74 +190,13 @@ if __name__ == "__main__":
 
     X, Y = import_data()
 
-    print('x')
-    run_forward_test(
-        X, Y, 'l', 'large_v1', -15, 'cuda', 'torch')
+    sizes = ['large_v1', 'medium_v1', 'small_v1']
+    priorities = [-15, 0, 15]
+    devices = ['cuda', 'cpu']
 
-    print('x')
-    run_forward_test(
-        X, Y, 'm', 'medium_v1', -15, 'cuda', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 's', 'small_v1', -15, 'cuda', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 'l', 'large_v1', 0, 'cuda', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 'm', 'medium_v1', 0, 'cuda', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 's', 'small_v1', 0, 'cuda', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 'l', 'large_v1', 15, 'cuda', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 'm', 'medium_v1', 15, 'cuda', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 's', 'small_v1', 15, 'cuda', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 'l', 'large_v1', -15, 'cpu', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 'm', 'medium_v1', -15, 'cpu', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 's', 'small_v1', -15, 'cpu', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 'l', 'large_v1', 0, 'cpu', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 'm', 'medium_v1', 0, 'cpu', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 's', 'small_v1', 0, 'cpu', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 'l', 'large_v1', 15, 'cpu', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 'm', 'medium_v1', 15, 'cpu', 'torch')
-
-    print('x')
-    run_forward_test(
-        X, Y, 's', 'small_v1', 15, 'cpu', 'torch')
+    for size in sizes:
+        for priority in priorities:
+            for device in devices:
+                print(size, priority, device)
+                run_forward_test(
+                    X, Y, size[0], size, priority, device, 'torch')
