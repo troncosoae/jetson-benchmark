@@ -52,8 +52,8 @@ class JtopAdapter(Thread):
     def __enter__(self):
         self.stopped = False
         self.start_time = time.time()
-        self.start()
         self.jtop_inst.__enter__()
+        self.start()
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
