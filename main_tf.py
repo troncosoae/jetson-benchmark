@@ -192,9 +192,14 @@ if __name__ == "__main__":
 
     X, Y = import_data()
 
-    sizes = ['large_v1', 'medium_v1', 'small_v1']
-    priorities = [-15, 0, 15]
-    devices = ['cuda', 'cpu']
+    try:
+        sizes = [sys.argv[1]]
+        priorities = [int(sys.argv[2])]
+        devices = [sys.argv[3]]
+    except IndexError:
+        sizes = ['large_v1', 'medium_v1', 'small_v1']
+        priorities = [-15, 0, 15]
+        devices = ['cuda', 'cpu']
 
     for size in sizes:
         for priority in priorities:
