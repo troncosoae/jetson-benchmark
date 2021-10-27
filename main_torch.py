@@ -28,6 +28,8 @@ def execute_net_torch(
         if echo and not torch.cuda.is_available():
             print("'cuda' device is not available. Using 'cpu' instead.")
 
+    net_interface.to_device(device)
+
     batches = split_into_batches(X_data, Y_data, batch_size)
 
     batch_exec_times = []
@@ -42,6 +44,7 @@ def execute_net_torch(
                 print('loop:', loop)
             batch_count = 0
             for X_batch, Y_batch in batches:
+                X_batch = X_batch.to(device)
                 start_time = time.time()
                 Y_pred = net_interface.predict_net(X_batch)
                 batch_time = time.time() - start_time

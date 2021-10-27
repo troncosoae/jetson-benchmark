@@ -58,5 +58,8 @@ class Interface:
 
         return correct/N, N
 
+    def to_device(self, device):
+        self.net.to(device)
+
     def convert2onnx(self, filepath, dummy_input):
         torch.onnx.export(self.net, dummy_input, filepath, verbose=False)
