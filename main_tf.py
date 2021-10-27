@@ -5,7 +5,7 @@ import os
 import csv
 if sys.platform == 'linux':
     from jtop import jtop
-    os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+from tensorflow import device as tf_device
 
 from data_worker.data_worker import unpickle, unpack_data, \
     combine_batches, split_into_batches
@@ -73,7 +73,8 @@ class JtopAdapter(Thread):
             time.sleep(self.interval)
 
     def export_stats(self):
-        return self.values, ['CPU1', 'CPU2', 'CPU3', 'CPU4', 'GPU', 'RAM']
+        return self.values, [
+            'CPU1', 'CPU2', 'CPU3', 'CPU4', 'GPU', 'RAM', 'time']
 
 
 def execute_net_tf(
@@ -85,34 +86,38 @@ def execute_net_tf(
 
     if device not in ['cuda', 'cpu']:
         raise Exception("'device' parameter must be one of 'cuda' or 'cpu'")
-    if device == 'cpu':
-        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    if device == 'cuda':
+        dev_string = '/gpu:0'
+    else:
+        dev_string = '/cpu:0'
 
     batches = split_into_batches(X_data, Y_data, batch_size)
 
     batch_exec_times = []
     columns_bet = ['loop', 'batch', 'batch_time', 'time']
 
-    with JtopAdapter(0.1) as tracker:
+    with tf_device(dev_string):
+        with JtopAdapter(0.1) as tracker:
 
-        initial_time = time.time()
+            initial_time = time.time()
 
-        for loop in range(loops):
-            if echo:
-                print('loop:', loop)
-            batch_count = 0
-            for X_batch, Y_batch in batches:
-                start_time = time.time()
-                Y_pred = net_interface.predict_net(X_batch)
-                batch_time = time.time() - start_time
+            for loop in range(loops):
                 if echo:
-                    print(f'batch_time: {batch_time:.8f}')
-                batch_exec_times.append((
-                    loop, batch_count, batch_time, time.time() - initial_time
-                ))
-                batch_count += 1
+                    print('loop:', loop)
+                batch_count = 0
+                for X_batch, Y_batch in batches:
+                    start_time = time.time()
+                    Y_pred = net_interface.predict_net(X_batch)
+                    batch_time = time.time() - start_time
+                    if echo:
+                        print(f'batch_time: {batch_time:.8f}')
+                    batch_exec_times.append((
+                        loop, batch_count, batch_time,
+                        time.time() - initial_time
+                    ))
+                    batch_count += 1
 
-        procesor_tracked_values, columns_ptv = tracker.export_stats()
+            procesor_tracked_values, columns_ptv = tracker.export_stats()
 
     return procesor_tracked_values, columns_ptv, batch_exec_times, columns_bet
 
@@ -138,13 +143,6 @@ def import_data():
 
 def run_forward_test(
         X_data, Y_data, net_size, saved_net_path, priority, device, framework):
-
-    if device not in ['cuda', 'cpu']:
-        raise Exception("'device' parameter must be one of 'cuda' or 'cpu'")
-    if device == 'cpu':
-        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-    else:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
 
     if framework not in ['torch', 'tf']:
         raise Exception("'framework' parameter must be one of 'torch' or 'tf'")
