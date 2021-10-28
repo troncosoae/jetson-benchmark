@@ -22,11 +22,13 @@ def execute_net_torch(
 
     if device not in ['cuda', 'cpu']:
         raise Exception("'device' parameter must be one of 'cuda' or 'cpu'")
-    device = torch.device('cpu')
+
     if device == 'cuda':
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         if echo and not torch.cuda.is_available():
             print("'cuda' device is not available. Using 'cpu' instead.")
+    else:
+        device = torch.device('cpu')
 
     net_interface.to_device(device)
 
