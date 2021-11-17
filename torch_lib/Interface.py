@@ -8,6 +8,7 @@ import numpy as np
 class Interface:
     def __init__(self, net) -> None:
         self.net = net
+        self.device = torch.device('cpu')
 
     def train_net(self, dataset_batches, epochs, verbose=False, **kwargs):
         criterion = kwargs.get('criterion', nn.CrossEntropyLoss())
@@ -44,10 +45,15 @@ class Interface:
         self.net.load_state_dict(torch.load(filepath))
 
     def predict_net(self, X, *args, **kwargs):
+        X = X.to(self.device)
         return self.net(X)
 
     def eval_acc_net(self, X, Y):
-        Y_pred = self.net(X).detach().numpy()
+
+        Y_pred = self.predict_net(X).detach()
+        if 'cuda' in str(next(self.net.parameters()).device):
+            Y_pred = Y_pred.cpu()
+        Y_pred = Y_pred.numpy()
         Y_pred = np.argmax(Y_pred, axis=1)
 
         N = Y.shape[0]
@@ -60,6 +66,8 @@ class Interface:
 
     def to_device(self, device):
         self.net.to(device)
+        self.device = device
 
     def convert2onnx(self, filepath, dummy_input):
+        dummy_input = dummy_input.to(self.device)
         torch.onnx.export(self.net, dummy_input, filepath, verbose=False)

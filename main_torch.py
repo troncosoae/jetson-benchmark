@@ -46,7 +46,6 @@ def execute_net_torch(
                 print('loop:', loop)
             batch_count = 0
             for X_batch, Y_batch in batches:
-                X_batch = X_batch.to(device)
                 start_time = time.time()
                 Y_pred = net_interface.predict_net(X_batch)
                 batch_time = time.time() - start_time
