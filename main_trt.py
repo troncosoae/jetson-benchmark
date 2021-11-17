@@ -1,10 +1,12 @@
 import numpy as np
 import argparse
 import time
+import os
+import sys
 
 from jtop_lib.JtopAdapter import JtopAdapter
 from trt_lib.Interface import Interface as trtInterface
-from importable_main import import_data
+from importable_main import import_data, write_csv
 from data_worker.data_worker import split_into_batches
 from torch_lib.data_worker import suit4torch
 from torch_lib.Interface import Interface as torchInterface
@@ -77,7 +79,7 @@ def suit4trt(batches, target_dtype=np.float32):
     return new_batches
 
 
-def run_trt_main(batch_size, path, loops=1, echo=False, **kwargs):
+def run_trt_main(batch_size, path, loops=1, priority=0, echo=False, **kwargs):
 
     target_dtype = np.float32
 
@@ -87,11 +89,7 @@ def run_trt_main(batch_size, path, loops=1, echo=False, **kwargs):
     X, Y = suit4torch(X_data, Y_data)
     batches = split_into_batches(X, Y, batch_size)
     batches = suit4trt(batches)
-    print(batches[0])
-    print(type(batches[0][0]))
     X_dummy, Y_dummy = batches[0]
-    print(X_dummy)
-    print(type(X_dummy))
 
     net_interface = trtInterface(
         path, X_dummy, batch_size=batch_size, n_classes=n_classes,
@@ -99,6 +97,9 @@ def run_trt_main(batch_size, path, loops=1, echo=False, **kwargs):
 
     batch_exec_times = []
     columns_bet = ['loop', 'batch', 'batch_time', 'time']
+
+    if sys.platform == 'linux':
+        os.nice(priority)
 
     with JtopAdapter(0.1) as tracker:
 
@@ -109,8 +110,6 @@ def run_trt_main(batch_size, path, loops=1, echo=False, **kwargs):
                 print('loop')
             batch_count = 0
             for X_batch, Y_batch in batches:
-                print(X_batch)
-                print(type(X_batch))
                 start_time = time.time()
                 Y_pred = net_interface.predict_net(X_batch)
                 batch_time = time.time() - start_time
@@ -123,33 +122,15 @@ def run_trt_main(batch_size, path, loops=1, echo=False, **kwargs):
 
         procesor_tracked_values, columns_ptv = tracker.export_stats()
 
-    # write_csv(
-    #     tracked_values, cols1,
-    #     f"performance_data/{framework}/{device}_{priority}_" +
-    #     f"{saved_net_path}/tracked_values.csv")
-    # write_csv(
-    #     batch_exec_times, cols2,
-    #     f"performance_data/{framework}/{device}_{priority}_" +
-    #     f"{saved_net_path}/batch_exec_times.csv")
-
-    X, Y = batches[0]
-
-    X = X.float()
-    Y = Y.float()
-
-    X = np.array(X, dtype=target_dtype)
-    Y = np.array(Y, dtype=target_dtype)
-    X = np.ascontiguousarray(X)
-
-    # path = "saved_nets/saved_onnx/torch_small_v1.trt"
-
-    net_interface = trtInterface(
-        path, X, batch_size=batch_size, n_classes=n_classes,
-        target_dtype=target_dtype)
-
-    Y_pred = net_interface.predict_net(X)
-
-    print(Y_pred)
+    name = path.split('/')[-1].split('.')[0]
+    write_csv(
+        procesor_tracked_values, columns_ptv,
+        f"performance_data/{'trt'}/{'cuda'}_{0}_" +
+        f"{name}/tracked_values.csv")
+    write_csv(
+        batch_exec_times, columns_bet,
+        f"performance_data/{'trt'}/{'cuda'}_{0}_" +
+        f"{name}/batch_exec_times.csv")
 
 
 if __name__ == "__main__":
