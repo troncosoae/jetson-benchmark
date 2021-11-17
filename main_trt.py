@@ -124,7 +124,7 @@ def run_trt_main(batch_size, path, loops=1, priority=0, echo=False, **kwargs):
 
     name = path.split('/')[-1].split('.')[0]
     framework = name.split('_')[0]
-    name = name.split('_')[1]
+    name = name.split('_')[1] + '_' + name.split('_')[2]
     write_csv(
         procesor_tracked_values, columns_ptv,
         f"performance_data/{'trt'}/{framework}/{'cuda'}_{priority}_" +
