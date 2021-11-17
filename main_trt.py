@@ -56,7 +56,7 @@ def export_onnx_main(path, size, framework, batch_size, **kwargs):
     net_interface.convert2onnx(path, dummy_batch)
 
 
-def run_trt_main(batch_size, path):
+def run_trt_main(batch_size, path, **kwargs):
 
     target_dtype = np.float32
 
