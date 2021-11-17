@@ -72,6 +72,7 @@ def suit4trt(batches, target_dtype=np.float32):
         X = np.array(X, dtype=target_dtype)
         Y = np.array(Y, dtype=target_dtype)
         X = np.ascontiguousarray(X)
+        # print(X, Y)
         new_batches.append((X, Y))
     return new_batches
 
@@ -86,9 +87,12 @@ def run_trt_main(batch_size, path, loops=1, echo=False, **kwargs):
     X, Y = suit4torch(X_data, Y_data)
     batches = split_into_batches(X, Y, batch_size)
     batches = suit4trt(batches)
+    print(batches[0])
+    print(type(batches[0][0]))
+    X_dummy, Y_dummy = batches[0]
 
     net_interface = trtInterface(
-        path, X, batch_size=batch_size, n_classes=n_classes,
+        path, X_dummy, batch_size=batch_size, n_classes=n_classes,
         target_dtype=target_dtype)
 
     batch_exec_times = []
