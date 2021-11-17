@@ -35,7 +35,13 @@ def get_args():
     return vars(args)
 
 
-def export_onnx_main(path, size, framework, dummy_input, **kwargs):
+def export_onnx_main(path, size, framework, batch_size, **kwargs):
+
+    X_data, Y_data = import_data()
+    X, Y = suit4torch(X_data, Y_data)
+    batches = split_into_batches(X, Y, batch_size)
+    dummy_batch, _ = batches[0]
+
     net = torchSNet()
     if size == 'small_v1':
         net = torchSNet()
@@ -47,19 +53,19 @@ def export_onnx_main(path, size, framework, dummy_input, **kwargs):
     net_interface.load_weights(
         f'saved_nets/saved_{framework}/{size}.pth')
 
-    net_interface.convert2onnx(path, dummy_input)
+    net_interface.convert2onnx(path, dummy_batch)
 
 
-def run_trt_main():
+def run_trt_main(batch_size, path):
 
     target_dtype = np.float32
 
     X_data, Y_data = import_data()
 
     X, Y = suit4torch(X_data, Y_data)
-    batch_size = 10
+    # batch_size = 10
     batches = split_into_batches(X, Y, batch_size)
-    dummy_batch, _ = batches[0]
+    X, Y = batches[0]
 
     X = X.float()
     Y = Y.float()
@@ -68,7 +74,7 @@ def run_trt_main():
     Y = np.array(Y, dtype=target_dtype)
     X = np.ascontiguousarray(X)
 
-    path = "saved_nets/saved_onnx/torch_small_v1.trt"
+    # path = "saved_nets/saved_onnx/torch_small_v1.trt"
 
     net_interface = trtInterface(
         path, X, batch_size=batch_size, n_classes=10,
@@ -83,13 +89,7 @@ if __name__ == "__main__":
 
     kwargs = get_args()
 
-    X_data, Y_data = import_data()
-    X, Y = suit4torch(X_data, Y_data)
-    batch_size = kwargs['batch_size']
-    batches = split_into_batches(X, Y, batch_size)
-    dummy_batch, _ = batches[0]
-
     if kwargs['export_onnx']:
-        export_onnx_main(dummy_input=dummy_batch, **kwargs)
+        export_onnx_main(**kwargs)
     else:
         run_trt_main(**kwargs)
