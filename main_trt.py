@@ -85,11 +85,11 @@ if __name__ == "__main__":
 
     X_data, Y_data = import_data()
     X, Y = suit4torch(X_data, Y_data)
-    batch_size = kwargs.batch_size
+    batch_size = kwargs['batch_size']
     batches = split_into_batches(X, Y, batch_size)
     dummy_batch, _ = batches[0]
 
-    if kwargs.export_onnx:
+    if kwargs['export_onnx']:
         export_onnx_main(dummy_input=dummy_batch, **kwargs)
     else:
         run_trt_main(**kwargs)
