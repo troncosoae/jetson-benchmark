@@ -123,13 +123,15 @@ def run_trt_main(batch_size, path, loops=1, priority=0, echo=False, **kwargs):
         procesor_tracked_values, columns_ptv = tracker.export_stats()
 
     name = path.split('/')[-1].split('.')[0]
+    framework = name.split('_')[0]
+    name = name.split('_')[1]
     write_csv(
         procesor_tracked_values, columns_ptv,
-        f"performance_data/{'trt'}/{'cuda'}_{0}_" +
+        f"performance_data/{'trt'}/{framework}/{'cuda'}_{priority}_" +
         f"{name}/tracked_values.csv")
     write_csv(
         batch_exec_times, columns_bet,
-        f"performance_data/{'trt'}/{'cuda'}_{0}_" +
+        f"performance_data/{'trt'}/{framework}/{'cuda'}_{priority}_" +
         f"{name}/batch_exec_times.csv")
 
 
