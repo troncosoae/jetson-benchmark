@@ -90,6 +90,8 @@ def run_trt_main(batch_size, path, loops=1, echo=False, **kwargs):
     print(batches[0])
     print(type(batches[0][0]))
     X_dummy, Y_dummy = batches[0]
+    print(X_dummy)
+    print(type(X_dummy))
 
     net_interface = trtInterface(
         path, X_dummy, batch_size=batch_size, n_classes=n_classes,
@@ -107,6 +109,8 @@ def run_trt_main(batch_size, path, loops=1, echo=False, **kwargs):
                 print('loop')
             batch_count = 0
             for X_batch, Y_batch in batches:
+                print(X_batch)
+                print(type(X_batch))
                 start_time = time.time()
                 Y_pred = net_interface.predict_net(X)
                 batch_time = time.time() - start_time
