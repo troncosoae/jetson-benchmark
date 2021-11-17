@@ -89,7 +89,7 @@ if __name__ == "__main__":
 
     kwargs = get_args()
 
-    if 'export_onnx' in kwargs:
+    if kwargs['export_onnx']:
         export_onnx_main(**kwargs)
     else:
         run_trt_main(**kwargs)
