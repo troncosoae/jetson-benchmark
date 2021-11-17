@@ -63,6 +63,7 @@ if __name__ == "__main__":
 
     X = np.array(X, dtype=target_dtype)
     Y = np.array(Y, dtype=target_dtype)
+    X = np.ascontiguousarray(X)
 
     path = "saved_nets/saved_onnx/torch_small_v1.trt"
 
