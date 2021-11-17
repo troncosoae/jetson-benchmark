@@ -112,7 +112,7 @@ def run_trt_main(batch_size, path, loops=1, echo=False, **kwargs):
                 print(X_batch)
                 print(type(X_batch))
                 start_time = time.time()
-                Y_pred = net_interface.predict_net(X)
+                Y_pred = net_interface.predict_net(X_batch)
                 batch_time = time.time() - start_time
                 if echo:
                     print(f'batch_time: {batch_time:.8f}')
